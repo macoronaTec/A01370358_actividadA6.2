@@ -2,8 +2,8 @@
 import uuid
 import json
 from typing import List
-from modelos import Hotel
-from exceptions import HotelError
+from modelos import Hotel, Customer
+from exceptions import HotelError, CustomerError
 from storage import JsonStorage
 
 
@@ -83,3 +83,86 @@ class HotelService:
                 self._save_hotels(hotels)
                 return
         raise HotelError("Hotel no encontrado.")
+    
+class CustomerService:
+    """Servicio de operaciones de los clientes."""
+
+    def __init__(self, storage: JsonStorage):
+        self.storage = storage
+
+    def _load_customers(self) -> List[Customer]:
+        """Load customers from storage."""
+        return [Customer(**data) for data in self.storage.load()]
+
+    def _save_customers(self, customers: List[Customer]) -> None:
+        clientes_dict = [customer.to_dict() for customer in customers]
+        with open('data/clientes.json', 'w') as file:
+            json.dump(clientes_dict, file, indent=4)
+
+    def create_customer(self, name: str, email: str) -> Customer:
+        """Create a new customer."""
+        customers = self._load_customers()
+
+        if not name or not email:
+            raise CustomerError("Name and email are required.")
+
+        # Prevent duplicate email
+        for customer in customers:
+            if customer.email == email:
+                raise CustomerError("Email already exists.")
+
+        new_customer = Customer(
+            customer_id=str(uuid.uuid4()),
+            name=name,
+            email=email
+        )
+
+        customers.append(new_customer)
+        self._save_customers(customers)
+        return new_customer
+    
+    def show_customers(self) -> Customer:
+        for customer in self._load_customers():
+            print("Cliente ID:", customer.customer_id)
+            print("Nombre:", customer.name)
+            print("Email:", customer.email)
+            print("*"*40)
+
+    def delete_customer(self, customer_id: str) -> None:
+        """Delete an existing customer."""
+        customers = self._load_customers()
+        filtered = [
+            customer for customer in customers
+            if customer.customer_id != customer_id
+        ]
+
+        if len(filtered) == len(customers):
+            raise CustomerError("Customer not found.")
+
+        self._save_customers(filtered)
+
+    def get_customer(self, customer_id: str) -> Customer:
+        """Retrieve a customer by ID."""
+        for customer in self._load_customers():
+            if customer.customer_id == customer_id:
+                return customer
+
+        raise CustomerError("Customer not found.")
+
+    def update_customer(self, customer_id: str,
+                        name: str = None,
+                        email: str = None) -> Customer:
+        """Update customer information."""
+        customers = self._load_customers()
+
+        for customer in customers:
+            if customer.customer_id == customer_id:
+                if name:
+                    customer.name = name
+                if email:
+                    customer.email = email
+
+                self._save_customers(customers)
+                return customer
+
+        raise CustomerError("Customer not found.")

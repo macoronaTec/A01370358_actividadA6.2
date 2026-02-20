@@ -1,28 +1,29 @@
-from servicios import HotelService
+from servicios import HotelService, CustomerService
 from storage import JsonStorage
 from pathlib import Path
 
 """Run example workflow."""
 
 script_location = Path(__file__).parent
-ARCHIVO_HOTELES = 'data/hotels.json'
-file_location = script_location / ARCHIVO_HOTELES
-print(file_location)
+#ARCHIVO_HOTELES = 'data/hotels.json'
+#file_location = script_location / ARCHIVO_HOTELES
+#print(file_location)
 # Initialize storage
-hotel_storage = JsonStorage(file_location)
+#hotel_storage = JsonStorage(file_location)
 
+## Hoteles ##
 # Initialize services
-print("=== Mostrar Hoteles ===")
-hotel_service = HotelService(hotel_storage)
-hotel_service.show_hotels()
+#print("=== Mostrar Hoteles ===")
+#hotel_service = HotelService(hotel_storage)
+#hotel_service.show_hotels()
 
-print("=== Crear un Hotel ===")
-hotel = hotel_service.create_hotel(
-    name="Marriot Cancun",
-    location="México",
-    total_rooms=5
-)
-print(hotel)
+#print("=== Crear un Hotel ===")
+#hotel = hotel_service.create_hotel(
+#    name="Marriot Cancun",
+#    location="México",
+#    total_rooms=5
+#)
+#print(hotel)
 
 #print("=== Actualizar Hotel ===")
 #id_hotel =  "d7d9b2b6-0c38-4754-b2a3-1a7b24c42637"
@@ -33,10 +34,20 @@ print(hotel)
 #    total_rooms=6
 #)
 
-print("=== Eliminar un Hotel ===")
-id_hotel =  "g7d9b2b6-0c38-4754-b2a3-1a7b24c42645"
-hotel_service.delete_hotel(id_hotel)
+#print("=== Eliminar un Hotel ===")
+#id_hotel =  "g7d9b2b6-0c38-4754-b2a3-1a7b24c42645"
+#hotel_service.delete_hotel(id_hotel)
 
+#print("=== Mostrar Hoteles ===")
+#hotel_service.show_hotels()
 
-print("=== Mostrar Hoteles ===")
-hotel_service.show_hotels()
+## Clientes ##
+ARCHIVO_CLIENTES = 'data/clientes.json'
+file_location = script_location / ARCHIVO_CLIENTES
+# Initialize storage
+customer_storage = JsonStorage(file_location)
+## Hoteles ##
+# Initialize services
+print("=== Mostrar Clientes ===")
+customer_service = CustomerService(customer_storage)
+customer_service.show_customers()

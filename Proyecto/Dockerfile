@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir pandas pylint flake8
 COPY . .
 
 # Comando para ejecutar el script
-#CMD ["python", "reserva_hotel.py"]
+CMD ["python", "reserva_hotel.py"]
 # Comando para ejecutar pylint al iniciar
-CMD ["pylint", "reserva_hotel.py"]
+#CMD ["pylint", "reserva_hotel.py"]
 # Comando para ejecutar flake8 al iniciar
 #CMD ["flake8", "reserva_hotel.py"]
