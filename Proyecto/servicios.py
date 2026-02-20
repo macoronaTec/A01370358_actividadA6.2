@@ -1,5 +1,6 @@
 
 import uuid
+import json
 from typing import List
 from modelos import Hotel
 from exceptions import HotelError
@@ -16,7 +17,9 @@ class HotelService:
         return [Hotel(**data) for data in self.storage.load()]
 
     def _save_hotels(self, hotels: List[Hotel]) -> None:
-        self.storage.save([hotel.to_dict() for hotel in hotels])
+        hoteles_dict = [hotel.to_dict() for hotel in hotels]
+        with open('data/hotels.json', 'w') as file:
+            json.dump(hoteles_dict, file, indent=4)
 
     def create_hotel(self, name: str, location: str,
                      total_rooms: int) -> Hotel:
@@ -27,12 +30,30 @@ class HotelService:
             location=location,
             total_rooms=total_rooms,
             available_rooms=total_rooms
-        )
-        hotels.append(hotel)
+       )
+        hotels.append(hotel)       
         self._save_hotels(hotels)
         return hotel
+    
+    def update_hotel(self, hotel_id: str, name: str, location: str,
+                     total_rooms: int) -> Hotel:
+        hotels = self._load_hotels()
+        for hotel in hotels:
+            if hotel.hotel_id == hotel_id:
+                print("Se actualizo la informacion del hotel: [" + hotel.name + "]")
+                hotel.name = name
+                hotel.location = location
+                hotel.total_rooms = total_rooms
+                hotel.available_rooms = total_rooms
+                self._save_hotels(hotels)
+                return hotel
+        raise HotelError("Hotel no encontrado.")
+
 
     def delete_hotel(self, hotel_id: str) -> None:
+        hotel_eliminado = self.get_hotel(hotel_id)
+        print("Se elimino el hotel: [" + hotel_eliminado.name + "]")
+        print("*"*40)
         hotels = self._load_hotels()
         filtered = [h for h in hotels if h.hotel_id != hotel_id]
         if len(filtered) == len(hotels):
@@ -44,6 +65,15 @@ class HotelService:
             if hotel.hotel_id == hotel_id:
                 return hotel
         raise HotelError("Hotel no encontrado.")
+    
+    def show_hotels(self) -> Hotel:
+        for hotel in self._load_hotels():
+            #print("Hotel ID:", hotel.hotel_id)
+            print("Nombre:", hotel.name)
+            print("Ubicación:", hotel.location)
+            print("Habitaciones totales:", hotel.total_rooms)
+            print("Habitaciones disponibles:", hotel.available_rooms)
+            print("*"*40)
 
     def reserve_room(self, hotel_id: str) -> None:
         hotels = self._load_hotels()
