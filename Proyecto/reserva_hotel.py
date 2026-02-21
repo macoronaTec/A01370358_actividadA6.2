@@ -48,6 +48,27 @@ file_location = script_location / ARCHIVO_CLIENTES
 customer_storage = JsonStorage(file_location)
 ## Hoteles ##
 # Initialize services
-print("=== Mostrar Clientes ===")
 customer_service = CustomerService(customer_storage)
+customer_service.show_customers()
+
+print("=== Agregar un cliente ===")
+customer = customer_service.create_customer(
+    name="Fernando Calzada",
+    email="fernando@example.com"
+)
+
+#customer_service.show_customers()
+
+print("=== Actualizar Cliente ===")
+id_cliente =  "C002"
+customer_service.update_customer(
+    customer_id=id_cliente,
+    name="Roberto Canales",
+    email="canales@example.com"
+)
+
+print("=== Eliminar un Cliente ===")
+id_cliente =  "C001"
+customer_service.delete_customer(id_cliente)
+
 customer_service.show_customers()

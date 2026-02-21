@@ -117,11 +117,13 @@ class CustomerService:
             email=email
         )
 
+        print("nuevo cliente creado: [" + new_customer.name + "]")
         customers.append(new_customer)
         self._save_customers(customers)
-        return new_customer
+        return new_customer 
     
     def show_customers(self) -> Customer:
+        print("=== Mostrar Clientes ===")
         for customer in self._load_customers():
             print("Cliente ID:", customer.customer_id)
             print("Nombre:", customer.name)
@@ -131,13 +133,16 @@ class CustomerService:
     def delete_customer(self, customer_id: str) -> None:
         """Delete an existing customer."""
         customers = self._load_customers()
+        customer_eliminado = self.get_customer(customer_id)
+        print("Se elimino el cliente: [" + customer_eliminado.name + "]")
+        print("*"*40)
         filtered = [
             customer for customer in customers
             if customer.customer_id != customer_id
         ]
 
         if len(filtered) == len(customers):
-            raise CustomerError("Customer not found.")
+            raise CustomerError("Cliente no encontrado.")
 
         self._save_customers(filtered)
 
@@ -157,6 +162,7 @@ class CustomerService:
 
         for customer in customers:
             if customer.customer_id == customer_id:
+                print("Se actualizo la informacion del cliente: [" + customer.name + "]")
                 if name:
                     customer.name = name
                 if email:
