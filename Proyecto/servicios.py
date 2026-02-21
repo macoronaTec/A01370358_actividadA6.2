@@ -2,8 +2,9 @@
 import uuid
 import json
 from typing import List
-from modelos import Hotel, Customer
-from exceptions import HotelError, CustomerError
+from modelos import Hotel, Customer, Reservation
+from exceptions import HotelError, CustomerError, ReservationError
+from modelos import Reservation
 from storage import JsonStorage
 
 
@@ -104,12 +105,12 @@ class CustomerService:
         customers = self._load_customers()
 
         if not name or not email:
-            raise CustomerError("Name and email are required.")
+            raise CustomerError("Name y email son requeridos.")
 
         # Prevent duplicate email
         for customer in customers:
             if customer.email == email:
-                raise CustomerError("Email already exists.")
+                raise CustomerError("Email ya existe.")
 
         new_customer = Customer(
             customer_id=str(uuid.uuid4()),
@@ -152,7 +153,7 @@ class CustomerService:
             if customer.customer_id == customer_id:
                 return customer
 
-        raise CustomerError("Customer not found.")
+        raise CustomerError("Cliente no encontrado.")
 
     def update_customer(self, customer_id: str,
                         name: str = None,
@@ -171,4 +172,196 @@ class CustomerService:
                 self._save_customers(customers)
                 return customer
 
-        raise CustomerError("Customer not found.")
+        raise CustomerError("Cliente no encontrado.")
+    
+class ReservationService:
+    """Service for reservation operations."""
+
+    def __init__(self,
+                 storage: JsonStorage,
+                 hotel_service: HotelService,
+                 customer_service: CustomerService):
+        self.storage = storage
+        self.hotel_service = hotel_service
+        self.customer_service = customer_service
+
+    def _load_reservations(self) -> List[Reservation]:
+        """Load reservations from storage."""
+        return [
+            Reservation(**data)
+            for data in self.storage.load()
+        ]
+
+    def _save_reservations(self,
+                           reservations: List[Reservation]) -> None:
+        """Save reservations to storage."""
+        self.storage.save([
+            reservation.to_dict()
+            for reservation in reservations
+        ])
+
+    def create_reservation(self,
+                           customer_id: str,
+                           hotel_id: str) -> Reservation:
+        """Create a reservation."""
+
+        # Validate customer exists
+        try:
+            self.customer_service.get_customer(customer_id)
+        except CustomerError as error:
+            raise ReservationError(str(error)) from error
+
+        # Validate hotel exists
+        try:
+            self.hotel_service.get_hotel(hotel_id)
+        except HotelError as error:
+            raise ReservationError(str(error)) from error
+
+        # Reserve room
+        try:
+            self.hotel_service.reserve_room(hotel_id)
+        except ValueError as error:
+            raise ReservationError(str(error)) from error
+
+        reservations = self._load_reservations()
+
+        new_reservation = Reservation(
+            reservation_id=str(uuid.uuid4()),
+            customer_id=customer_id,
+            hotel_id=hotel_id
+        )
+
+        reservations.append(new_reservation)
+        self._save_reservations(reservations)
+
+        return new_reservation
+
+    def cancel_reservation(self, reservation_id: str) -> None:
+        """Cancel an existing reservation."""
+        reservations = self._load_reservations()
+
+        for reservation in reservations:
+            if reservation.reservation_id == reservation_id:
+
+                # Free room in hotel
+                hotel = self.hotel_service.get_hotel(
+                    reservation.hotel_id
+                )
+                hotel.cancel_reservation()
+
+                # Update hotel persistence
+                hotels = self.hotel_service._load_hotels()
+                for stored in hotels:
+                    if stored.hotel_id == hotel.hotel_id:
+                        stored.available_rooms = hotel.available_rooms
+
+                self.hotel_service._save_hotels(hotels)
+
+                # Remove reservation
+                updated = [
+                    res for res in reservations
+                    if res.reservation_id != reservation_id
+                ]
+
+                self._save_reservations(updated)
+                return
+
+        raise ReservationError("Reservation not found.")
+    
+class ReservationService:
+    """Service for reservation operations."""
+
+    def __init__(self,
+                 storage: JsonStorage,
+                 hotel_service: HotelService,
+                 customer_service: CustomerService):
+        self.storage = storage
+        self.hotel_service = hotel_service
+        self.customer_service = customer_service
+
+    def _load_reservations(self) -> List[Reservation]:
+        """Load reservations from storage."""
+        return [
+            Reservation(**data)
+            for data in self.storage.load()
+        ]
+
+    def _save_reservations(self,
+                           reservations: List[Reservation]) -> None:
+        """Save reservations to storage."""
+        self.storage.save([
+            reservation.to_dict()
+            for reservation in reservations
+        ])
+
+    def create_reservation(self,
+                           customer_id: str,
+                           hotel_id: str) -> Reservation:
+        """Create a reservation."""
+
+        # Validate customer exists
+        try:
+            cliente = self.customer_service.get_customer(customer_id)
+            print("La reservación es a nombre de: [" + cliente.name + "] con id: [" + cliente.customer_id + "]")
+        except CustomerError as error:
+            raise ReservationError(str(error)) from error
+
+        # Validate hotel exists
+        try:
+            hotel =self.hotel_service.get_hotel(hotel_id)
+            print("En el hotel: [" + hotel.name + "]")
+        except HotelError as error:
+            raise ReservationError(str(error)) from error
+
+        # Reserve room
+        try:
+            self.hotel_service.reserve_room(hotel_id)
+            print("Se reservo una habitación")
+        except ValueError as error:
+            raise ReservationError(str(error)) from error
+
+        reservations = self._load_reservations()
+
+        new_reservation = Reservation(
+            reservation_id=str(uuid.uuid4()),
+            customer_id=customer_id,
+            hotel_id=hotel_id
+        )
+
+        reservations.append(new_reservation)
+        self._save_reservations(reservations)
+
+        return new_reservation
+
+    def cancel_reservation(self, reservation_id: str) -> None:
+        """Cancel an existing reservation."""
+        reservations = self._load_reservations()
+
+        for reservation in reservations:
+            if reservation.reservation_id == reservation_id:
+
+                # Free room in hotel
+                hotel = self.hotel_service.get_hotel(
+                    reservation.hotel_id
+                )
+                hotel.cancel_reservation()
+                print("Se cancelo la reservación con id: [" + reservation_id + "]")
+
+                # Update hotel persistence
+                hotels = self.hotel_service._load_hotels()
+                for stored in hotels:
+                    if stored.hotel_id == hotel.hotel_id:
+                        stored.available_rooms = hotel.available_rooms
+
+                self.hotel_service._save_hotels(hotels)
+
+                # Remove reservation
+                updated = [
+                    res for res in reservations
+                    if res.reservation_id != reservation_id
+                ]
+
+                self._save_reservations(updated)
+                return
+
+        raise ReservationError("Reservation not found.")
